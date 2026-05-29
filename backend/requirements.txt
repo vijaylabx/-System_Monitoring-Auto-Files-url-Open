@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+psutil
+watchdog
+pywin32
+SQLAlchemy
+pydantic
+schedule

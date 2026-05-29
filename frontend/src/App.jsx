@@ -6,8 +6,15 @@ import Analytics from './components/Analytics';
 import Settings from './components/Settings';
 import { AnimatePresence } from 'framer-motion';
 
+import Widget from './components/Widget';
+
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
+
+  // Check if we are rendering the System Tray Widget
+  if (window.location.search.includes('widget=true')) {
+    return <Widget />;
+  }
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-dark-bg selection:bg-brand-primary/30">

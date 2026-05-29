@@ -39,6 +39,10 @@ class ProcessMonitor:
         pythoncom.CoInitialize()
         c = wmi.WMI()
         process_watcher = c.Win32_Process.watch_for("creation")
+        
+        from backend.config import load_settings
+        from backend.notifications.notifier import notifier
+
         while self.running:
             try:
                 new_process = process_watcher(timeout_ms=2000)
@@ -46,6 +50,19 @@ class ProcessMonitor:
                     pid = int(new_process.ProcessId)
                     name = new_process.Name
                     exe = new_process.ExecutablePath
+                    
+                    # Focus Mode Check
+                    settings = load_settings()
+                    if settings.get("focusMode", False):
+                        blocked = [app.strip().lower() for app in settings.get("blockedApps", "").split("\n") if app.strip()]
+                        if name and name.lower() in blocked:
+                            try:
+                                import os, signal
+                                os.kill(pid, signal.SIGTERM)
+                                notifier.send("Focus Mode Active", f"Blocked distracting app: {name}", level="warning")
+                                continue # Skip logging this killed process
+                            except Exception as e:
+                                print(f"Failed to kill blocked app {name}: {e}")
                     
                     db = SessionLocal()
                     log = ProcessLog(pid=pid, name=name, exe=exe)

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
-import { Save, Bell, Monitor, Power, Database, AlertTriangle } from 'lucide-react';
+import { Save, Bell, Monitor, Power, Database, AlertTriangle, Shield } from 'lucide-react';
 
 export default function Settings() {
   const [settings, setSettings] = useState({
@@ -10,6 +10,9 @@ export default function Settings() {
     notifications: true,
     delayBetweenLaunches: 1.5,
     autoCleanup: true,
+    focusMode: false,
+    blockedApps: "Discord.exe\nSteam.exe",
+    blockedWebsites: "facebook.com\ntwitter.com\nreddit.com",
   });
 
   useEffect(() => {
@@ -37,10 +40,15 @@ export default function Settings() {
     }
   };
 
-  const handleWipeData = () => {
+  const handleWipeData = async () => {
     if (window.confirm("Are you sure you want to wipe all process and analytics data? This action cannot be undone.")) {
-      // Typically call an API like DELETE /api/system/database
-      alert("Analytics data wiped successfully!");
+      try {
+        await axios.delete('http://localhost:8000/api/system/database');
+        alert("Analytics data wiped successfully!");
+      } catch (err) {
+        console.error(err);
+        alert("Failed to wipe data.");
+      }
     }
   };
 
@@ -94,7 +102,7 @@ export default function Settings() {
           
           <div>
             <label className="block text-gray-200 font-medium mb-1">Launch Delay (Seconds)</label>
-            <p className="text-sm text-gray-400 mb-3">Delay between opening multiple applications to prevent CPU spikes.</p>
+            <p className="text-sm text-gray-400 mb-3">Delay between opening multiple applications.</p>
             <input 
               type="number" 
               name="delayBetweenLaunches" 
@@ -105,6 +113,55 @@ export default function Settings() {
               className="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-brand-primary" 
             />
           </div>
+        </div>
+      </div>
+
+      {/* Second Row: 3 Columns */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Focus Mode Settings */}
+        <div className="glass-panel p-6 space-y-6">
+          <div className="flex items-center gap-3 border-b border-white/5 pb-4 mb-4">
+            <Shield className="text-red-400" size={24} />
+            <h3 className="text-xl font-semibold">Focus & Productivity</h3>
+          </div>
+
+          <label className="flex items-center justify-between cursor-pointer group mb-4">
+            <div>
+              <span className="text-gray-200 font-medium block">Focus Mode</span>
+              <span className="text-sm text-gray-400">Instantly block distracting apps</span>
+            </div>
+            <div className="relative">
+              <input type="checkbox" name="focusMode" checked={settings.focusMode} onChange={handleChange} className="sr-only" />
+              <div className={`block w-10 h-6 rounded-full transition-colors ${settings.focusMode ? 'bg-brand-primary' : 'bg-gray-600'}`}></div>
+              <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${settings.focusMode ? 'transform translate-x-4' : ''}`}></div>
+            </div>
+          </label>
+
+          {settings.focusMode && (
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="space-y-4">
+              <div>
+                <label className="block text-gray-200 font-medium mb-1">Blocked Desktop Apps</label>
+                <p className="text-sm text-gray-400 mb-2">One executable name per line (e.g. Discord.exe)</p>
+                <textarea 
+                  name="blockedApps" 
+                  value={settings.blockedApps} 
+                  onChange={handleChange}
+                  className="w-full h-24 bg-black/30 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-brand-primary" 
+                />
+              </div>
+              
+              <div>
+                <label className="block text-gray-200 font-medium mb-1">Blocked Websites</label>
+                <p className="text-sm text-gray-400 mb-2">One domain per line (e.g. facebook.com). Note: Requires running as Administrator to apply.</p>
+                <textarea 
+                  name="blockedWebsites" 
+                  value={settings.blockedWebsites || ""} 
+                  onChange={handleChange}
+                  className="w-full h-24 bg-black/30 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-brand-primary" 
+                />
+              </div>
+            </motion.div>
+          )}
         </div>
 
         {/* Database Settings */}

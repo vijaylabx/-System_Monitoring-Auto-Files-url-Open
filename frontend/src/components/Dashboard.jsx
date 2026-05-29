@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Cpu, HardDrive, MemoryStick } from 'lucide-react';
+import { Cpu, HardDrive, MemoryStick, Wifi } from 'lucide-react';
 import axios from 'axios';
 
 const API_BASE = 'http://localhost:8000/api';
@@ -18,7 +18,7 @@ const StatCard = ({ title, value, icon: Icon, colorClass }) => (
 );
 
 export default function Dashboard() {
-  const [stats, setStats] = useState({ cpu: 0, ram: 0, disk: 0 });
+  const [stats, setStats] = useState({ cpu: 0, ram: 0, disk: 0, net_up: 0, net_down: 0 });
   const [processes, setProcesses] = useState([]);
 
   useEffect(() => {
@@ -52,7 +52,7 @@ export default function Dashboard() {
         <p className="text-gray-400 mt-1">Real-time metrics and activity</p>
       </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard 
           title="CPU Usage" 
           value={stats.cpu} 
@@ -71,6 +71,18 @@ export default function Dashboard() {
           icon={HardDrive} 
           colorClass="bg-gradient-to-br from-teal-500 to-teal-700"
         />
+        <div className="glass-panel p-6 flex items-center gap-4">
+          <div className="p-4 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700">
+            <Wifi size={24} className="text-white" />
+          </div>
+          <div>
+            <p className="text-sm text-gray-400 font-medium">Network (Mbps)</p>
+            <div className="flex gap-3 mt-1">
+              <span className="text-emerald-400 font-bold text-sm">↑ {stats.net_up}</span>
+              <span className="text-emerald-400 font-bold text-sm">↓ {stats.net_down}</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">

@@ -6,13 +6,18 @@ from backend.analytics.insights import engine as analytics_engine
 from backend.notifications.notifier import notifier
 from backend.monitors.process_monitor import monitor as proc_monitor
 from backend.monitors.file_monitor import monitor as file_monitor
+from backend.monitors.website_blocker import update_hosts_file
 import psutil
+import time
 from backend.config import load_settings, save_settings
 
 # Create tables
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="System Monitor API")
+
+last_net = psutil.net_io_counters()
+last_net_time = time.time()
 
 app.add_middleware(
     CORSMiddleware,
@@ -26,6 +31,14 @@ app.add_middleware(
 def startup_event():
     proc_monitor.start()
     file_monitor.start()
+
+    # Initial Hosts File Setup for Focus Mode
+    settings = load_settings()
+    focus_mode = settings.get("focusMode", False)
+    blocked_websites = [s for s in settings.get("blockedWebsites", "").split("\n") if s.strip()]
+    success, msg = update_hosts_file(focus_mode, blocked_websites)
+    if not success:
+        print(f"Warning: {msg}")
 
     # 1. Database Auto-Cleanup Routine
     import threading, schedule, time
@@ -63,10 +76,27 @@ def shutdown_event():
 
 @app.get("/api/system/stats")
 def get_system_stats():
+    global last_net, last_net_time
+    current_net = psutil.net_io_counters()
+    current_time = time.time()
+    
+    dt = current_time - last_net_time
+    if dt > 0:
+        up_speed = (current_net.bytes_sent - last_net.bytes_sent) / dt
+        down_speed = (current_net.bytes_recv - last_net.bytes_recv) / dt
+    else:
+        up_speed = 0
+        down_speed = 0
+        
+    last_net = current_net
+    last_net_time = current_time
+
     return {
         "cpu": psutil.cpu_percent(interval=None),
         "ram": psutil.virtual_memory().percent,
-        "disk": psutil.disk_usage('/').percent
+        "disk": psutil.disk_usage('/').percent,
+        "net_up": round((up_speed * 8) / 1_000_000, 1),
+        "net_down": round((down_speed * 8) / 1_000_000, 1)
     }
 
 @app.get("/api/system/processes")
@@ -108,9 +138,30 @@ def get_pending_notifications():
 @app.get("/api/settings")
 def get_settings():
     return load_settings()
-
+@app.delete("/api/system/database")
+def wipe_database():
+    try:
+        db = SessionLocal()
+        db.query(ProcessLog).delete()
+        db.query(FileLog).delete()
+        db.commit()
+        db.close()
+        notifier.send("Database Cleared", "All analytics data has been wiped.")
+        return {"status": "success"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 @app.post("/api/settings")
 def update_settings(settings: dict):
     save_settings(settings)
-    notifier.send("Settings Updated", "Your preferences have been successfully saved.")
+    
+    # Update Hosts file for Website Blocker
+    focus_mode = settings.get("focusMode", False)
+    blocked_websites = [s for s in settings.get("blockedWebsites", "").split("\n") if s.strip()]
+    success, msg = update_hosts_file(focus_mode, blocked_websites)
+    
+    if not success:
+        notifier.send("Settings Saved (Partial)", "App blocking active, but website blocking requires Administrator privileges.", level="warning")
+    else:
+        notifier.send("Settings Updated", "Your preferences and Focus Mode have been successfully saved.")
+        
     return {"status": "success"}

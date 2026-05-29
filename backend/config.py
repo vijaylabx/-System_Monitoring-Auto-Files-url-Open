@@ -16,6 +16,9 @@ def load_settings():
         "notifications": True,
         "delayBetweenLaunches": 1.5,
         "autoCleanup": True,
+        "focusMode": False,
+        "blockedApps": "Discord.exe\nSteam.exe",
+        "blockedWebsites": "facebook.com\ntwitter.com\nreddit.com"
     }
 
 def save_settings(data):

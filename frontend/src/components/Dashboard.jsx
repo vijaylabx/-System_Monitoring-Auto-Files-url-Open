@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Cpu, HardDrive, MemoryStick, Wifi } from 'lucide-react';
+import { Cpu, HardDrive, MemoryStick, Wifi, Trash2 } from 'lucide-react';
 import axios from 'axios';
 
 const API_BASE = 'http://localhost:8000/api';
@@ -39,6 +39,16 @@ export default function Dashboard() {
     const interval = setInterval(fetchStats, 2000);
     return () => clearInterval(interval);
   }, []);
+
+  const killProcess = async (pid) => {
+    try {
+      await axios.delete(`${API_BASE}/system/processes/${pid}`);
+      setProcesses(prev => prev.filter(p => p.pid !== pid));
+    } catch (err) {
+      console.error("Failed to kill process", err);
+      alert("Failed to kill process. Ensure you have the right permissions.");
+    }
+  };
 
   return (
     <motion.div
@@ -95,7 +105,8 @@ export default function Dashboard() {
                   <th className="px-4 py-2 rounded-l-lg">Name</th>
                   <th className="px-4 py-2">PID</th>
                   <th className="px-4 py-2">RAM %</th>
-                  <th className="px-4 py-2 rounded-r-lg">CPU %</th>
+                  <th className="px-4 py-2">CPU %</th>
+                  <th className="px-4 py-2 rounded-r-lg">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -105,6 +116,15 @@ export default function Dashboard() {
                     <td className="px-4 py-3">{proc.pid}</td>
                     <td className="px-4 py-3">{proc.memory_percent?.toFixed(1) || 0}%</td>
                     <td className="px-4 py-3">{proc.cpu_percent?.toFixed(1) || 0}%</td>
+                    <td className="px-4 py-3">
+                      <button 
+                        onClick={() => killProcess(proc.pid)} 
+                        className="text-red-400 hover:text-red-300 transition-colors bg-red-400/10 hover:bg-red-400/20 p-2 rounded-lg"
+                        title="Kill Process"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

@@ -111,6 +111,19 @@ def get_live_processes():
     procs = sorted(procs, key=lambda p: p['memory_percent'] or 0, reverse=True)[:10]
     return procs
 
+@app.delete("/api/system/processes/{pid}")
+def kill_process(pid: int):
+    try:
+        proc = psutil.Process(pid)
+        proc.terminate()
+        return {"status": "success", "message": f"Process {pid} terminated."}
+    except psutil.NoSuchProcess:
+        return {"status": "error", "message": "Process not found."}
+    except psutil.AccessDenied:
+        return {"status": "error", "message": "Access denied."}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
 @app.get("/api/workspaces")
 def get_workspaces():
     return ws_manager.get_all_workspaces()

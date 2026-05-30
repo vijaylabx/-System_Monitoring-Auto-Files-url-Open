@@ -40,6 +40,18 @@ class WorkspaceManager:
         db.close()
         return {"status": "success", "message": f"Workspace '{name}' created."}
 
+    def update_workspace(self, workspace_id, name, config):
+        db = SessionLocal()
+        ws = db.query(Workspace).filter(Workspace.id == workspace_id).first()
+        if ws:
+            ws.name = name
+            ws.config_json = json.dumps(config)
+            db.commit()
+            db.close()
+            return {"status": "success", "message": f"Workspace '{name}' updated."}
+        db.close()
+        return {"status": "error", "message": "Not found"}
+
     def delete_workspace(self, workspace_id):
         db = SessionLocal()
         ws = db.query(Workspace).filter(Workspace.id == workspace_id).first()

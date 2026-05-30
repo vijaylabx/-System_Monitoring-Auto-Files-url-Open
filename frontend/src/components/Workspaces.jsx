@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Play, Plus, Trash2, Folder, Globe, Terminal, Layers, X } from 'lucide-react';
+import { Play, Plus, Trash2, Edit2, Folder, Globe, Terminal, Layers, X } from 'lucide-react';
 import axios from 'axios';
 
 const API_BASE = 'http://localhost:8000/api';
@@ -8,7 +8,9 @@ const API_BASE = 'http://localhost:8000/api';
 export default function Workspaces() {
   const [workspaces, setWorkspaces] = useState([]);
   const [isCreating, setIsCreating] = useState(false);
+  const [editingId, setEditingId] = useState(null);
   const [newWs, setNewWs] = useState({ name: '', websites: '', applications: '', folders: '' });
+  
   useEffect(() => {
     fetchWorkspaces();
   }, []);
@@ -40,6 +42,17 @@ export default function Workspaces() {
     }
   };
 
+  const handleEditClick = (ws) => {
+    setNewWs({
+      name: ws.name,
+      websites: ws.config.websites ? ws.config.websites.join('\n') : '',
+      applications: ws.config.applications ? ws.config.applications.join('\n') : '',
+      folders: ws.config.folders ? ws.config.folders.join('\n') : ''
+    });
+    setEditingId(ws.id);
+    setIsCreating(true);
+  };
+
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
@@ -48,8 +61,15 @@ export default function Workspaces() {
         applications: newWs.applications.split('\n').filter(Boolean),
         folders: newWs.folders.split('\n').filter(Boolean)
       };
-      await axios.post(`${API_BASE}/workspaces`, { name: newWs.name, config });
+      
+      if (editingId) {
+        await axios.put(`${API_BASE}/workspaces/${editingId}`, { name: newWs.name, config });
+      } else {
+        await axios.post(`${API_BASE}/workspaces`, { name: newWs.name, config });
+      }
+      
       setIsCreating(false);
+      setEditingId(null);
       setNewWs({ name: '', websites: '', applications: '', folders: '' });
       fetchWorkspaces();
     } catch (err) {
@@ -70,7 +90,11 @@ export default function Workspaces() {
           <p className="text-gray-400 mt-1">Bulk launcher system for your environments</p>
         </div>
         <button 
-          onClick={() => setIsCreating(true)}
+          onClick={() => {
+            setEditingId(null);
+            setNewWs({ name: '', websites: '', applications: '', folders: '' });
+            setIsCreating(true);
+          }}
           className="bg-brand-primary hover:bg-blue-600 text-white px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-colors">
           <Plus size={20} />
           New Workspace
@@ -80,8 +104,11 @@ export default function Workspaces() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {workspaces.map((ws) => (
           <div key={ws.id} className="glass-panel p-6 flex flex-col group relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button onClick={() => handleDelete(ws.id)} className="text-red-400 hover:text-red-300 transition-colors">
+            <div className="absolute top-0 right-0 p-4 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+              <button onClick={() => handleEditClick(ws)} className="text-gray-400 hover:text-white transition-colors" title="Edit Workspace">
+                <Edit2 size={20} />
+              </button>
+              <button onClick={() => handleDelete(ws.id)} className="text-red-400 hover:text-red-300 transition-colors" title="Delete Workspace">
                 <Trash2 size={20} />
               </button>
             </div>
@@ -135,10 +162,10 @@ export default function Workspaces() {
             animate={{ opacity: 1, scale: 1 }}
             className="glass-panel w-full max-w-lg p-6 relative"
           >
-            <button onClick={() => setIsCreating(false)} className="absolute top-4 right-4 text-gray-400 hover:text-white">
+            <button onClick={() => { setIsCreating(false); setEditingId(null); }} className="absolute top-4 right-4 text-gray-400 hover:text-white">
               <X size={24} />
             </button>
-            <h3 className="text-2xl font-bold mb-6">Create New Workspace</h3>
+            <h3 className="text-2xl font-bold mb-6">{editingId ? 'Edit Workspace' : 'Create New Workspace'}</h3>
             <form onSubmit={handleCreate} className="space-y-4">
               <div>
                 <label className="block text-sm text-gray-400 mb-1">Workspace Name</label>
@@ -157,7 +184,7 @@ export default function Workspaces() {
                 <textarea value={newWs.folders} onChange={e => setNewWs({...newWs, folders: e.target.value})} className="w-full h-24 bg-black/30 border border-white/10 rounded-lg p-3 text-white focus:outline-none focus:border-brand-primary" placeholder="D:/Projects/Dashboard"></textarea>
               </div>
               <button type="submit" className="w-full bg-brand-primary hover:bg-blue-600 text-white font-bold py-3 rounded-lg transition-colors mt-4">
-                Save Workspace
+                {editingId ? 'Update Workspace' : 'Save Workspace'}
               </button>
             </form>
           </motion.div>

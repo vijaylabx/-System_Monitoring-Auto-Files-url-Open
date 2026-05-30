@@ -132,6 +132,10 @@ def get_workspaces():
 def create_workspace(data: dict):
     return ws_manager.create_workspace(data.get("name"), data.get("config"))
 
+@app.put("/api/workspaces/{workspace_id}")
+def update_workspace(workspace_id: int, data: dict):
+    return ws_manager.update_workspace(workspace_id, data.get("name"), data.get("config"))
+
 @app.post("/api/workspaces/{workspace_id}/launch")
 def launch_workspace(workspace_id: int):
     return ws_manager.launch_workspace(workspace_id)

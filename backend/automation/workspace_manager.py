@@ -1,9 +1,18 @@
 import json
 import os
+import sys
 import subprocess
 import webbrowser
 import threading
 import time
+
+def open_file_or_folder(path):
+    if sys.platform == "win32":
+        os.startfile(path)
+    elif sys.platform == "darwin":
+        subprocess.call(["open", path])
+    else:
+        subprocess.call(["xdg-open", path])
 from backend.database.database import SessionLocal
 from backend.database.models import Workspace
 
@@ -74,7 +83,7 @@ class WorkspaceManager:
         for folder in folders:
             if os.path.exists(folder):
                 try:
-                    os.startfile(folder)
+                    open_file_or_folder(folder)
                     time.sleep(0.5)
                 except Exception as e:
                     print(f"Failed to open folder {folder}: {e}")
@@ -95,7 +104,7 @@ class WorkspaceManager:
             try:
                 if os.path.exists(clean_path):
                     # Open the valid file, executable, shortcut (.lnk), or folder natively
-                    os.startfile(clean_path)
+                    open_file_or_folder(clean_path)
                     time.sleep(delay)
                 else:
                     # If path doesn't exist, it might be a system command in PATH or contain arguments

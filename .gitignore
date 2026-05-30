@@ -1,0 +1,22 @@
+# Local application data and settings
+system_monitor.db
+settings.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+venv/
+env/
+.env
+
+# Node/Frontend
+node_modules/
+dist/
+
+# OS/IDE
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

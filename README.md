@@ -1,9 +1,10 @@
 # Nexus - Personal System Monitoring & Workspace Automation Dashboard
 
-Nexus is a modern, locally-hosted desktop monitoring and automation platform for Windows. It provides real-time system performance tracking, application usage analytics, file system monitoring, and a robust "Workspace Automation" launcher—all wrapped in a beautiful Windows 11-inspired glassmorphism UI.
+Nexus is a modern, locally-hosted, cross-platform monitoring and automation dashboard. It provides real-time system performance tracking, application usage analytics, file system monitoring, and a robust "Workspace Automation" launcher—all wrapped in a beautiful glassmorphism UI. Works seamlessly on Windows, macOS, and Linux!
 
 ## 🌟 Features
 
+- **Cross-Platform**: Natively supports Windows, macOS, and Linux.
 - **System Startup Service**: Runs silently in the background and minimizes to the system tray.
 - **Process & Performance Monitoring**: Tracks CPU, RAM, and application usage in real-time using `psutil`. Allows killing rogue processes directly from the dashboard.
 - **File System Monitoring**: Tracks created, modified, and deleted files using `watchdog`.
@@ -48,7 +49,10 @@ cd backend
 
 # (Optional but recommended) Create a virtual environment
 python -m venv venv
-venv\Scripts\activate  # On Windows
+# On Windows:
+venv\Scripts\activate
+# On macOS/Linux:
+source venv/bin/activate
 
 # Install the required dependencies
 pip install -r requirements.txt
@@ -81,6 +85,18 @@ We've included a batch script to start both the Python backend and the Electron 
 ```bash
 # Just double-click the file in File Explorer, or run in terminal:
 start_nexus.bat
+```
+
+### The Easy Way (macOS & Linux)
+
+For Unix-based systems, we have a shell script ready to go:
+
+```bash
+# Make it executable first (only needed once)
+chmod +x start_nexus.sh
+
+# Run the script
+./start_nexus.sh
 ```
 
 ### The Manual Way
@@ -122,7 +138,8 @@ nexus-monitoring/
 ├── system_monitor.db   # (Ignored) Auto-generated local SQLite DB
 ├── settings.json       # (Ignored) Your local configuration
 ├── start_backend.py    # Python API entrypoint
-└── start_nexus.bat     # Quick startup script for Windows
+├── start_nexus.bat     # Quick startup script for Windows
+└── start_nexus.sh      # Quick startup script for macOS & Linux
 ```
 
 ## 🔒 Privacy & Data
